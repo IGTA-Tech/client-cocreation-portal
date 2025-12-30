@@ -1,22 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
-  --primary: #2563eb;
+  /* Innovative Automations Brand Colors */
+  --background: #F0F5FA;
+  --foreground: #1e293b;
+  --primary: #046BD2;
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #1e293b;
+  --muted: #e2e8f0;
   --muted-foreground: #64748b;
-  --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
+  --accent: #045CB4;
+  --accent-foreground: #ffffff;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #2563eb;
+  --border: #D1D5DB;
+  --input: #D1D5DB;
+  --ring: #046BD2;
   --radius: 0.5rem;
+  --card: #ffffff;
+  --card-foreground: #1e293b;
 }
 
 @theme inline {
@@ -35,6 +38,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -49,13 +54,15 @@
     --secondary-foreground: #f8fafc;
     --muted: #1e293b;
     --muted-foreground: #94a3b8;
-    --accent: #1e293b;
-    --accent-foreground: #f8fafc;
+    --accent: #045CB4;
+    --accent-foreground: #ffffff;
     --destructive: #dc2626;
     --destructive-foreground: #ffffff;
     --border: #334155;
     --input: #334155;
     --ring: #3b82f6;
+    --card: #1e293b;
+    --card-foreground: #f8fafc;
   }
 }
 
@@ -66,9 +73,10 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -88,11 +96,19 @@ body {
   background: var(--foreground);
 }
 
+/* Focus styles */
 :focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
+/* Smooth transitions */
 button, a, input, textarea {
   transition: all 0.15s ease;
+}
+
+/* Card styling */
+.card {
+  background: var(--card);
+  color: var(--card-foreground);
 }

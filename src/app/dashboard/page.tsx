@@ -1,7 +1,10 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { MessageSquare, Plus, Wrench, Clock, CheckCircle } from 'lucide-react'
+
+const IA_LOGO = "https://www.innovativeautomations.dev/wp-content/uploads/2025/04/Innovative-Automation-Studios-Logo-trimmed.png"
 
 // This will be populated from Supabase once connected
 const mockConversations = [
@@ -68,11 +71,15 @@ export default function DashboardPage() {
       <header className="border-b">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-                IA
-              </div>
-              <span className="text-xl font-semibold">Innovative Automations</span>
+            <Link href="/" className="flex items-center gap-3">
+              <Image
+                src={IA_LOGO}
+                alt="Innovative Automations"
+                width={140}
+                height={40}
+                className="h-10 w-auto"
+                priority
+              />
             </Link>
           </div>
           <nav className="flex items-center gap-4">
