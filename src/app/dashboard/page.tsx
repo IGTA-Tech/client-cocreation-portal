@@ -1,39 +1,23 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { MessageSquare, Plus, Wrench, Clock, CheckCircle } from 'lucide-react'
+import { MessageSquare, Plus, Wrench, Clock, CheckCircle, Loader2, Trash2 } from 'lucide-react'
 import { AuthButton } from '@/components/auth/AuthButton'
+import { createClient } from '@/lib/supabase/client'
 
 const IA_LOGO = "https://www.innovativeautomations.dev/wp-content/uploads/2025/04/Innovative-Automation-Studios-Logo-trimmed.png"
 
-// This will be populated from Supabase once connected
-const mockConversations = [
-  {
-    id: '1',
-    title: 'O-1A Visa - Evidence Organization Tool',
-    status: 'active',
-    updated_at: new Date().toISOString(),
-    message_count: 8,
-  },
-  {
-    id: '2',
-    title: 'P-1A Itinerary Generator',
-    status: 'spec_generated',
-    updated_at: new Date(Date.now() - 86400000).toISOString(),
-    message_count: 12,
-  },
-]
-
-const mockProjects = [
-  {
-    id: '1',
-    title: 'Evidence Chronology Builder',
-    status: 'building',
-    progress_percent: 45,
-    current_stage: 'Frontend Development',
-  },
-]
+interface Conversation {
+  id: string
+  title: string | null
+  status: string
+  updated_at: string
+  messages: Array<{ id: string; role: string; content: string }>
+}
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
@@ -66,6 +50,49 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function DashboardPage() {
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [loading, setLoading] = useState(true)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  // Fetch conversations from Supabase
+  useEffect(() => {
+    async function fetchConversations() {
+      const supabase = createClient()
+
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .order('updated_at', { ascending: false })
+
+      if (error) {
+        console.error('Error fetching conversations:', error)
+      } else {
+        setConversations(data || [])
+      }
+      setLoading(false)
+    }
+
+    fetchConversations()
+  }, [])
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this conversation?')) return
+
+    setDeletingId(id)
+    try {
+      const response = await fetch(`/api/conversations/${id}`, {
+        method: 'DELETE',
+      })
+      if (response.ok) {
+        setConversations(prev => prev.filter(c => c.id !== id))
+      }
+    } catch (error) {
+      console.error('Failed to delete conversation:', error)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -106,7 +133,7 @@ export default function DashboardPage() {
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{mockConversations.length}</div>
+              <div className="text-2xl font-bold">{conversations.length}</div>
               <p className="text-xs text-muted-foreground">Tool discovery chats</p>
             </CardContent>
           </Card>
@@ -116,7 +143,7 @@ export default function DashboardPage() {
               <Wrench className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{mockProjects.length}</div>
+              <div className="text-2xl font-bold">0</div>
               <p className="text-xs text-muted-foreground">Being built for you</p>
             </CardContent>
           </Card>
@@ -144,7 +171,13 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          {mockConversations.length === 0 ? (
+          {loading ? (
+            <Card>
+              <CardContent className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </CardContent>
+            </Card>
+          ) : conversations.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
@@ -159,16 +192,18 @@ export default function DashboardPage() {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {mockConversations.map((conversation) => (
+              {conversations.map((conversation) => (
                 <Card key={conversation.id} className="hover:border-primary/50 transition-colors">
                   <CardHeader className="flex flex-row items-start justify-between space-y-0">
                     <div className="space-y-1">
-                      <CardTitle className="text-lg">{conversation.title}</CardTitle>
+                      <CardTitle className="text-lg">
+                        {conversation.title || 'Untitled Conversation'}
+                      </CardTitle>
                       <CardDescription className="flex items-center gap-2">
                         <Clock className="h-3 w-3" />
                         {new Date(conversation.updated_at).toLocaleDateString()}
                         <span className="text-muted-foreground">•</span>
-                        {conversation.message_count} messages
+                        {conversation.messages?.length || 0} messages
                       </CardDescription>
                     </div>
                     <StatusBadge status={conversation.status} />
@@ -180,6 +215,19 @@ export default function DashboardPage() {
                     {conversation.status === 'spec_generated' && (
                       <Button size="sm">View Spec</Button>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => handleDelete(conversation.id)}
+                      disabled={deletingId === conversation.id}
+                    >
+                      {deletingId === conversation.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </Button>
                   </CardContent>
                 </Card>
               ))}
@@ -193,47 +241,15 @@ export default function DashboardPage() {
             <h2 className="text-xl font-semibold">Tools in Development</h2>
           </div>
 
-          {mockProjects.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Wrench className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No projects yet</h3>
-                <p className="text-muted-foreground text-center">
-                  Once you approve a tool specification, it will appear here as we build it.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {mockProjects.map((project) => (
-                <Card key={project.id}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle>{project.title}</CardTitle>
-                        <CardDescription>{project.current_stage}</CardDescription>
-                      </div>
-                      <StatusBadge status={project.status} />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Progress</span>
-                        <span className="font-medium">{project.progress_percent}%</span>
-                      </div>
-                      <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                        <div
-                          className="h-full bg-primary transition-all"
-                          style={{ width: `${project.progress_percent}%` }}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Wrench className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">No projects yet</h3>
+              <p className="text-muted-foreground text-center">
+                Once you approve a tool specification, it will appear here as we build it.
+              </p>
+            </CardContent>
+          </Card>
         </section>
       </main>
     </div>
