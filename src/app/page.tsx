@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare, Wrench, Sparkles } from "lucide-react";
+import { AuthButton } from "@/components/auth/AuthButton";
 
 const IA_LOGO = "https://www.innovativeautomations.dev/wp-content/uploads/2025/04/Innovative-Automation-Studios-Logo-trimmed.png";
 
@@ -29,6 +30,7 @@ export default function Home() {
             <Link href="/chat">
               <Button>Start Chat</Button>
             </Link>
+            <AuthButton />
           </nav>
         </div>
       </header>

@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { MessageSquare, Plus, Wrench, Clock, CheckCircle } from 'lucide-react'
+import { AuthButton } from '@/components/auth/AuthButton'
 
 const IA_LOGO = "https://www.innovativeautomations.dev/wp-content/uploads/2025/04/Innovative-Automation-Studios-Logo-trimmed.png"
 
@@ -89,6 +90,7 @@ export default function DashboardPage() {
                 New Chat
               </Button>
             </Link>
+            <AuthButton />
           </nav>
         </div>
       </header>
