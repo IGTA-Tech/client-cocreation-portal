@@ -1,0 +1,232 @@
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { MessageSquare, Plus, Wrench, Clock, CheckCircle } from 'lucide-react'
+
+// This will be populated from Supabase once connected
+const mockConversations = [
+  {
+    id: '1',
+    title: 'O-1A Visa - Evidence Organization Tool',
+    status: 'active',
+    updated_at: new Date().toISOString(),
+    message_count: 8,
+  },
+  {
+    id: '2',
+    title: 'P-1A Itinerary Generator',
+    status: 'spec_generated',
+    updated_at: new Date(Date.now() - 86400000).toISOString(),
+    message_count: 12,
+  },
+]
+
+const mockProjects = [
+  {
+    id: '1',
+    title: 'Evidence Chronology Builder',
+    status: 'building',
+    progress_percent: 45,
+    current_stage: 'Frontend Development',
+  },
+]
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    active: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    spec_generated: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    converted_to_project: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    queued: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
+    designing: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    building: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+    testing: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200',
+    delivered: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  }
+
+  const labels: Record<string, string> = {
+    active: 'In Progress',
+    spec_generated: 'Spec Ready',
+    converted_to_project: 'In Development',
+    queued: 'Queued',
+    designing: 'Designing',
+    building: 'Building',
+    testing: 'Testing',
+    delivered: 'Delivered',
+  }
+
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status] || styles.active}`}>
+      {labels[status] || status}
+    </span>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+          <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
+                IA
+              </div>
+              <span className="text-xl font-semibold">Innovative Automations</span>
+            </Link>
+          </div>
+          <nav className="flex items-center gap-4">
+            <Link href="/chat">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                New Chat
+              </Button>
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-6xl px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">Your Dashboard</h1>
+
+        {/* Quick Stats */}
+        <div className="grid gap-4 md:grid-cols-3 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Conversations</CardTitle>
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{mockConversations.length}</div>
+              <p className="text-xs text-muted-foreground">Tool discovery chats</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Tools in Development</CardTitle>
+              <Wrench className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{mockProjects.length}</div>
+              <p className="text-xs text-muted-foreground">Being built for you</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Delivered Tools</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">0</div>
+              <p className="text-xs text-muted-foreground">Ready to use</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Conversations Section */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Your Conversations</h2>
+            <Link href="/chat">
+              <Button variant="outline" size="sm">
+                <Plus className="h-4 w-4 mr-1" />
+                Start New
+              </Button>
+            </Link>
+          </div>
+
+          {mockConversations.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No conversations yet</h3>
+                <p className="text-muted-foreground text-center mb-4">
+                  Start a chat to discover what custom tool would help your visa journey.
+                </p>
+                <Link href="/chat">
+                  <Button>Start Discovery Chat</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {mockConversations.map((conversation) => (
+                <Card key={conversation.id} className="hover:border-primary/50 transition-colors">
+                  <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg">{conversation.title}</CardTitle>
+                      <CardDescription className="flex items-center gap-2">
+                        <Clock className="h-3 w-3" />
+                        {new Date(conversation.updated_at).toLocaleDateString()}
+                        <span className="text-muted-foreground">•</span>
+                        {conversation.message_count} messages
+                      </CardDescription>
+                    </div>
+                    <StatusBadge status={conversation.status} />
+                  </CardHeader>
+                  <CardContent className="flex gap-2">
+                    <Link href={`/chat/${conversation.id}`}>
+                      <Button variant="outline" size="sm">Continue Chat</Button>
+                    </Link>
+                    {conversation.status === 'spec_generated' && (
+                      <Button size="sm">View Spec</Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Projects Section */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Tools in Development</h2>
+          </div>
+
+          {mockProjects.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Wrench className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No projects yet</h3>
+                <p className="text-muted-foreground text-center">
+                  Once you approve a tool specification, it will appear here as we build it.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {mockProjects.map((project) => (
+                <Card key={project.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle>{project.title}</CardTitle>
+                        <CardDescription>{project.current_stage}</CardDescription>
+                      </div>
+                      <StatusBadge status={project.status} />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Progress</span>
+                        <span className="font-medium">{project.progress_percent}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                        <div
+                          className="h-full bg-primary transition-all"
+                          style={{ width: `${project.progress_percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
+  )
+}

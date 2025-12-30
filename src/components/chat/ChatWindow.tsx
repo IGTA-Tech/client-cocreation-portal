@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { MessageBubble } from './MessageBubble'
 import { InputBar } from './InputBar'
 import type { Message } from '@/types'
-import { generateId } from '@/lib/utils'
-import { Loader2 } from 'lucide-react'
+import { generateId, formatRelativeTime } from '@/lib/utils'
+import { Loader2, Save, CheckCircle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 const INITIAL_MESSAGE: Message = {
   id: 'welcome',
@@ -18,10 +19,22 @@ Let's start - what type of visa are you working on? (For example: O-1A, O-1B, P-
   timestamp: new Date().toISOString(),
 }
 
-export function ChatWindow() {
-  const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE])
+interface ChatWindowProps {
+  conversationId?: string
+  initialMessages?: Message[]
+  onSave?: (messages: Message[]) => Promise<void>
+}
+
+export function ChatWindow({ conversationId, initialMessages, onSave }: ChatWindowProps) {
+  const [messages, setMessages] = useState<Message[]>(initialMessages || [INITIAL_MESSAGE])
   const [isLoading, setIsLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Suppress unused variable warnings
+  void conversationId
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -30,6 +43,41 @@ export function ChatWindow() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Save conversation function
+  const handleSaveConversation = useCallback(async () => {
+    if (!onSave || messages.length <= 1) return
+
+    setIsSaving(true)
+    try {
+      await onSave(messages.filter(m => m.id !== 'welcome'))
+      setLastSaved(new Date())
+    } catch (error) {
+      console.error('Failed to save conversation:', error)
+    } finally {
+      setIsSaving(false)
+    }
+  }, [messages, onSave])
+
+  // Auto-save after each message exchange (debounced)
+  useEffect(() => {
+    if (messages.length > 1 && !isLoading && onSave) {
+      // Clear existing timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+      // Set new timeout
+      saveTimeoutRef.current = setTimeout(() => {
+        handleSaveConversation()
+      }, 2000) // Save 2 seconds after last change
+    }
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [messages, isLoading, onSave, handleSaveConversation])
 
   const handleSend = async (content: string) => {
     // Add user message
@@ -84,6 +132,33 @@ export function ChatWindow() {
 
   return (
     <div className="flex h-full flex-col">
+      {/* Save status bar */}
+      {onSave && messages.length > 1 && (
+        <div className="flex items-center justify-end gap-2 px-4 py-2 border-b bg-muted/30">
+          {isSaving ? (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Saving...
+            </span>
+          ) : lastSaved ? (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <CheckCircle className="h-3 w-3 text-green-500" />
+              Saved {formatRelativeTime(lastSaved)}
+            </span>
+          ) : null}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSaveConversation}
+            disabled={isSaving || messages.length <= 1}
+            className="h-7 text-xs"
+          >
+            <Save className="h-3 w-3 mr-1" />
+            Save Now
+          </Button>
+        </div>
+      )}
+
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl">
