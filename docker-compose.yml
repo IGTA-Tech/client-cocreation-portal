@@ -1,0 +1,13 @@
+services:
+  cocreate-portal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cocreate-portal
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
