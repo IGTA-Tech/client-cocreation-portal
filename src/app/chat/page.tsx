@@ -73,9 +73,9 @@ export default function ChatPage() {
           />
         </Link>
         <div className="flex-1">
-          <h1 className="text-lg font-semibold">Tool Discovery Chat</h1>
+          <h1 className="text-lg font-semibold">Co-Creation Studio</h1>
           <p className="text-sm text-muted-foreground">
-            Let&apos;s discover what tool would help your visa journey
+            Design your O-1 itinerary app with AI guidance
           </p>
         </div>
       </header>

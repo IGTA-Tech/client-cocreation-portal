@@ -3,9 +3,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { MessageBubble } from './MessageBubble'
 import { InputBar } from './InputBar'
+import { ProgressIndicator, detectSpec, extractSpecContent } from './ProgressIndicator'
 import type { Message } from '@/types'
 import { generateId, formatRelativeTime } from '@/lib/utils'
-import { Loader2, Save, CheckCircle } from 'lucide-react'
+import { Loader2, Save, CheckCircle, Download, Rocket } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface ChatWindowProps {
@@ -20,6 +21,8 @@ export function ChatWindow({ conversationId, initialMessages, onSave }: ChatWind
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [hasStarted, setHasStarted] = useState(false)
+  const [specDetected, setSpecDetected] = useState(false)
+  const [specEmailSent, setSpecEmailSent] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -32,6 +35,39 @@ export function ChatWindow({ conversationId, initialMessages, onSave }: ChatWind
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Check for spec in messages
+  useEffect(() => {
+    const hasSpec = detectSpec(messages)
+    if (hasSpec && !specDetected) {
+      setSpecDetected(true)
+    }
+  }, [messages, specDetected])
+
+  // Send email when spec is detected
+  useEffect(() => {
+    async function sendSpecEmail() {
+      if (specDetected && !specEmailSent && messages.length > 0) {
+        setSpecEmailSent(true)
+        const specContent = extractSpecContent(messages)
+        if (specContent) {
+          try {
+            await fetch('/api/chat/spec-complete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                messages,
+                specContent,
+              }),
+            })
+          } catch (error) {
+            console.error('Failed to send spec email:', error)
+          }
+        }
+      }
+    }
+    sendSpecEmail()
+  }, [specDetected, specEmailSent, messages])
 
   // Auto-start conversation to get personalized greeting
   useEffect(() => {
@@ -150,10 +186,31 @@ export function ChatWindow({ conversationId, initialMessages, onSave }: ChatWind
     }
   }
 
+  const handleDownloadSpec = () => {
+    const specContent = extractSpecContent(messages)
+    if (!specContent) return
+
+    const blob = new Blob([specContent], { type: 'text/markdown' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'app-specification.md'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="flex h-full flex-col">
+      {/* Progress Indicator */}
+      <div className="border-b bg-muted/30 px-4 py-3">
+        <ProgressIndicator messages={messages} specDetected={specDetected} />
+      </div>
+
+      {/* Save status bar */}
       {onSave && messages.length > 1 && (
-        <div className="flex items-center justify-end gap-2 px-4 py-2 border-b bg-muted/30">
+        <div className="flex items-center justify-end gap-2 px-4 py-2 border-b bg-muted/20">
           {isSaving ? (
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -175,6 +232,44 @@ export function ChatWindow({ conversationId, initialMessages, onSave }: ChatWind
             <Save className="h-3 w-3 mr-1" />
             Save Now
           </Button>
+        </div>
+      )}
+
+      {/* Spec ready banner */}
+      {specDetected && (
+        <div className="bg-green-50 dark:bg-green-950 border-b border-green-200 dark:border-green-800 px-4 py-3">
+          <div className="flex items-center justify-between max-w-3xl mx-auto">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🎉</span>
+              <div>
+                <p className="font-medium text-green-800 dark:text-green-200">
+                  Your App Specification is Ready!
+                </p>
+                <p className="text-sm text-green-600 dark:text-green-400">
+                  Download your spec or request a build from our team
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadSpec}
+                className="border-green-300 text-green-700 hover:bg-green-100 dark:border-green-700 dark:text-green-300"
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Download Spec
+              </Button>
+              <Button
+                size="sm"
+                className="bg-green-600 hover:bg-green-700 text-white"
+                onClick={() => window.open('mailto:sherrod@sherrodsportsvisas.com?subject=Build Request: My O-1 App', '_blank')}
+              >
+                <Rocket className="h-4 w-4 mr-1" />
+                Request Build
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 

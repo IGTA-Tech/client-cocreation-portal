@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendOnboardingEmail } from '@/lib/sendgrid'
 
 export async function POST(request: Request) {
   try {
@@ -49,6 +50,18 @@ export async function POST(request: Request) {
         { status: 500 }
       )
     }
+
+    // Send email notification to team
+    await sendOnboardingEmail({
+      full_name,
+      email: user.email || '',
+      phone,
+      company,
+      visa_type,
+      field_of_expertise,
+      project_description,
+      attorney_name: attorney_name || 'Sherrod Seward',
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {
