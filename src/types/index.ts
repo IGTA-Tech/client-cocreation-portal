@@ -5,6 +5,9 @@ export interface User {
   company: string | null
   visa_type: string | null
   attorney_name: string | null
+  phone: string | null
+  field_of_expertise: string | null
+  project_description: string | null
   created_at: string
 }
 
@@ -47,6 +50,13 @@ export interface ToolSpec {
   approved_by_client: boolean
   approved_at: string | null
   created_at: string
+  app_description: string | null
+  extraordinary_ability_connection: string | null
+  target_users: string | null
+  deployment_plan: Record<string, unknown> | null
+  three_year_roadmap: Record<string, unknown> | null
+  screenshots_plan: unknown[] | null
+  future_features: unknown[] | null
 }
 
 export interface UserStory {

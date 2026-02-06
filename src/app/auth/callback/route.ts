@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const next = requestUrl.searchParams.get('next') || '/dashboard'
 
   if (code) {
     const supabase = await createClient()
@@ -13,13 +12,27 @@ export async function GET(request: Request) {
 
     if (error) {
       console.error('Auth callback error:', error)
-      // Redirect to login with error
       return NextResponse.redirect(
         new URL('/login?error=Could not authenticate', requestUrl.origin)
       )
     }
+
+    // Check if user has completed profile
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (user) {
+      const { data: profile } = await supabase
+        .from('users')
+        .select('full_name, visa_type')
+        .eq('id', user.id)
+        .single()
+
+      // If profile incomplete, redirect to onboarding
+      if (!profile?.full_name || !profile?.visa_type) {
+        return NextResponse.redirect(new URL('/onboarding', requestUrl.origin))
+      }
+    }
   }
 
-  // Redirect to the dashboard or the next URL
-  return NextResponse.redirect(new URL(next, requestUrl.origin))
+  return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
 }
