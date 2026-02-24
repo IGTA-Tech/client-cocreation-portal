@@ -6,7 +6,7 @@ if (apiKey) {
   sgMail.setApiKey(apiKey)
 }
 
-const FROM_EMAIL = 'cocreation@innovativeautomations.dev'
+const FROM_EMAIL = 'noreply@innovativeautomations.dev'
 const NOTIFY_EMAIL = 'sherrod@sherrodsportsvisas.com'
 
 interface OnboardingData {
@@ -166,6 +166,50 @@ ${data.full_spec.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
     return true
   } catch (error) {
     console.error('Failed to send app spec email:', error)
+    return false
+  }
+}
+
+/**
+ * Send magic link email for authentication
+ */
+export async function sendMagicLinkEmail(email: string, magicLink: string): Promise<boolean> {
+  if (!apiKey) {
+    console.warn('SendGrid API key not configured - skipping magic link email')
+    return false
+  }
+
+  const msg = {
+    to: email,
+    from: FROM_EMAIL,
+    subject: 'Your Co-Creation Studio Sign-In Link',
+    text: `Click the link below to sign in to Co-Creation Studio:\n\n${magicLink}\n\nThis link expires in 1 hour. If you didn't request this, you can safely ignore this email.`,
+    html: `
+      <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
+        <h2 style="color: #333;">Sign in to Co-Creation Studio</h2>
+        <p>Click the button below to sign in to your account:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${magicLink}"
+             style="background-color: #2563eb; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-size: 16px; display: inline-block;">
+            Sign In
+          </a>
+        </div>
+        <p style="color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
+        <p style="color: #2563eb; font-size: 14px; word-break: break-all;">${magicLink}</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+        <p style="color: #999; font-size: 12px;">
+          This link expires in 1 hour. If you didn't request this sign-in link, you can safely ignore this email.
+        </p>
+      </div>
+    `,
+  }
+
+  try {
+    await sgMail.send(msg)
+    console.log('Magic link email sent successfully to', email)
+    return true
+  } catch (error) {
+    console.error('Failed to send magic link email:', error)
     return false
   }
 }

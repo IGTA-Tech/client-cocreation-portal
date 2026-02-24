@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
+import { sendMagicLinkEmail } from '@/lib/sendgrid'
 
 export async function POST(request: Request) {
   try {
@@ -12,23 +13,37 @@ export async function POST(request: Request) {
       )
     }
 
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
 
     // Get the origin for the redirect URL
     const origin = request.headers.get('origin') || 'http://localhost:3000'
 
-    const { error } = await supabase.auth.signInWithOtp({
+    // Generate the magic link using Admin API (bypasses Supabase email sending)
+    const { data, error } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
       email,
       options: {
-        emailRedirectTo: `${origin}/auth/callback`,
+        redirectTo: `${origin}/auth/callback`,
       },
     })
 
     if (error) {
-      console.error('Magic link error:', error)
+      console.error('Magic link generation error:', error)
       return NextResponse.json(
         { error: error.message },
         { status: 400 }
+      )
+    }
+
+    // Send the magic link email via SendGrid
+    const actionLink = data.properties.action_link
+    const emailSent = await sendMagicLinkEmail(email, actionLink)
+
+    if (!emailSent) {
+      console.error('Failed to send magic link email via SendGrid')
+      return NextResponse.json(
+        { error: 'Failed to send sign-in email. Please try again.' },
+        { status: 500 }
       )
     }
 
