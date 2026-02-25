@@ -6,7 +6,7 @@ if (apiKey) {
   sgMail.setApiKey(apiKey)
 }
 
-const FROM_EMAIL = 'noreply@innovativeautomations.dev'
+const FROM_EMAIL = 'noreply@coinnovations.online'
 const NOTIFY_EMAIL = 'sherrod@sherrodsportsvisas.com'
 
 interface OnboardingData {
